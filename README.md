@@ -1,12 +1,13 @@
 # Kindle Highlights to Markdown
 
-A CLI tool to convert Kindle's `My Clippings.txt` file into structured Markdown, JSON, or Obsidian-compatible notes.
+A CLI tool to parse Kindle highlights (`My Clippings.txt`) and export them to Markdown for Obsidian, Notion, or blogging.
 
 ## Features
-- Convert `My Clippings.txt` to Markdown, JSON, or Obsidian-compatible files.
-- Preserve metadata (author, title, location, date).
-- Customizable output format.
-- CLI-based for easy integration into workflows.
+- Parse `My Clippings.txt` into structured data.
+- Export highlights to Markdown (one file per book).
+- Filter by book, date, or highlight type.
+- Deduplicate identical highlights.
+- Zero dependencies (single-file executable).
 
 ## Installation
 ```bash
@@ -15,7 +16,21 @@ pip install kindle-highlights-to-markdown
 
 ## Usage
 ```bash
-kindle-highlights-to-markdown --input "My Clippings.txt" --output highlights.md --format markdown
+kindle-highlights --input "My Clippings.txt" --output "~/notes/kindle/"
+```
+
+## Example Output
+```markdown
+# The Pragmatic Programmer
+**Author**: Andrew Hunt, David Thomas
+**Date**: 2026-05-15
+
+## Highlights
+- > The cat ate my source code.
+  *Location: 1234 | Added: 2026-05-10*
+
+- > Programming is a craft.
+  *Location: 5678 | Added: 2026-05-12* | #philosophy*
 ```
 
 ## License
