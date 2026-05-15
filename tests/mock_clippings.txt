@@ -1,0 +1,10 @@
+The Pragmatic Programmer: Your Journey to Mastery (David Thomas)
+- Your Highlight on Location 123-124 | Added on Monday, January 1, 2024 10:00:00 AM
+
+This is a test highlight.
+==========
+Atomic Habits (James Clear)
+- Your Highlight on Page 42 | Added on Tuesday, January 2, 2024 11:00:00 AM
+
+Another test highlight.
+==========
