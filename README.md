@@ -33,5 +33,14 @@ kindle-highlights --input "My Clippings.txt" --output "~/notes/kindle/"
   *Location: 5678 | Added: 2026-05-12* | #philosophy*
 ```
 
+## Consolidation Notice
+This repository is the **canonical source** for `kindle-highlights-to-markdown`.
+
+Due to autonomous development cycles, redundant repositories were created:
+- [kindle-highlights-to-markdown-1778816163](https://github.com/fairyfemirins/kindle-highlights-to-markdown-1778816163)
+- [kindle-highlights-to-markdown-femirins](https://github.com/fairyfemirins/kindle-highlights-to-markdown-femirins)
+
+**All future updates will be pushed here.** Redundant repositories are archived.
+
 ## License
 MIT
