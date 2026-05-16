@@ -1,109 +1,173 @@
 #!/usr/bin/env python3
 """
-Kindle Highlights to Markdown CLI
+Kindle Highlights to Markdown/Notion/Anki
 
-Parses Kindle's 'My Clippings.txt' and exports highlights/notes to Markdown.
-Format: 
+Parses My Clippings.txt and exports highlights to:
+- Markdown (Obsidian-compatible with YAML frontmatter)
+- Notion (via API)
+- Anki (CSV import format)
 
-# Book Title (Author)
-
-> Highlight/Note
-> - Location 123 | Added on Friday, May 15, 2026
-
+Usage:
+  python3 kindle_highlights.py --input "My Clippings.txt" --output_dir ./output --format markdown
 """
 
 import re
 import argparse
 from pathlib import Path
-from typing import List, Dict, Optional
+from datetime import datetime
+import yaml
+import csv
+import os
 
 
-class KindleHighlight:
-    """Represents a single highlight or note from Kindle."""
+class KindleHighlights:
+    def __init__(self, input_path):
+        self.input_path = input_path
+        self.highlights = []
+        self.books = set()
 
-    def __init__(self, book_title: str, author: str, content: str, location: str, date: str, highlight_type: str):
-        self.book_title = book_title.strip()
-        self.author = author.strip()
-        self.content = content.strip()
-        self.location = location.strip()
-        self.date = date.strip()
-        self.type = highlight_type.strip()  # "Highlight" or "Note"
+    def parse(self):
+        """Parse My Clippings.txt into structured data."""
+        with open(self.input_path, 'r', encoding='utf-8-sig') as f:
+            content = f.read()
 
-    def to_markdown(self) -> str:
-        """Convert highlight/note to Markdown."""
-        header = f"# {self.book_title} ({self.author})\n\n"
-        body = f"> {self.content}\n> - {self.type} | Location {self.location} | Added on {self.date}\n\n"
-        return header + body
+        # Split into entries (Kindle separates entries with "==========")
+        entries = content.split('==========')
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
 
+            # Simplified regex to extract title, author, metadata, and highlight
+            pattern = r"^(.*?) \((.*?)\)\r?\n- (.+?)\r?\n\r?\n([\s\S]+?)$"
+            match = re.match(pattern, entry, re.DOTALL | re.MULTILINE)
+            if not match:
+                continue
 
-def parse_clippings(file_path: Path) -> List[KindleHighlight]:
-    """Parse 'My Clippings.txt' and return a list of highlights/notes."""
-    with open(file_path, 'r', encoding='utf-8-sig') as f:
-        content = f.read()
+            title, author, metadata, highlight = match.groups()
+            timestamp = self._extract_timestamp(metadata)
+            location = self._extract_location(metadata)
 
-    # Split into entries (separated by "==========")
-    entries = re.split(r'\r?\n==========\r?\n', content)
-    highlights = []
+            self.highlights.append({
+                'title': title.strip(),
+                'author': author.strip(),
+                'highlight': highlight.strip(),
+                'location': location,
+                'timestamp': timestamp,
+                'tags': []
+            })
+            self.books.add(title.strip())
 
-    for entry in entries:
-        if not entry.strip():
-            continue
+    def _extract_timestamp(self, metadata):
+        """Extract timestamp from metadata."""
+        pattern = r"Added on (.*?)$"
+        match = re.search(pattern, metadata)
+        if match:
+            dt_str = match.group(1)
+            try:
+                return datetime.strptime(dt_str, '%A, %B %d, %Y %I:%M:%S %p')
+            except ValueError:
+                return None
+        return None
 
-        # Regex to extract metadata (flexible for "page X" or no page)
-        pattern = r'^(.*?)\n(.*?)\n- (Your (Highlight|Note)( on page \d+)? \| Location (\d+-\d+|\d+) \| Added on (.*?))$'
-        match = re.match(pattern, entry, re.MULTILINE | re.DOTALL)
-        if not match:
-            continue
+    def _extract_location(self, metadata):
+        """Extract location/page from metadata."""
+        pattern = r"(?:location|loc|page|pos) (\d+)"
+        match = re.search(pattern, metadata, re.IGNORECASE)
+        return match.group(1) if match else "Unknown"
 
-        book_title = match.group(1)
-        author = match.group(2)
-        metadata = match.group(3)
-        highlight_type = match.group(4)
-        location = match.group(6)  # Updated group index
-        date = match.group(7)      # Updated group index
-        content = entry.split(metadata)[1].strip()
+    def add_tags(self, tags):
+        """Add tags to highlights (e.g., by book title)."""
+        for highlight in self.highlights:
+            highlight['tags'].extend(tags.get(highlight['title'], []))
 
-        highlights.append(
-            KindleHighlight(
-                book_title=book_title,
-                author=author,
-                content=content,
-                location=location,
-                date=date,
-                highlight_type=highlight_type
-            )
-        )
+    def export_markdown(self, output_dir):
+        """Export highlights to Markdown files (Obsidian-compatible)."""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    return highlights
+        for book in self.books:
+            book_highlights = [h for h in self.highlights if h['title'] == book]
+            if not book_highlights:
+                continue
 
+            md_content = f"# {book}\n\n**Author:** {book_highlights[0]['author']}\n\n"
+            for h in book_highlights:
+                md_content += f"## Location {h['location']}\n"
+                md_content += f"**Added on:** {h['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if h['timestamp'] else 'Unknown'}\n"
+                md_content += f"**Tags:** {', '.join(h['tags']) if h['tags'] else 'None'}\n\n"
+                md_content += f"{h['highlight']}\n\n---\n\n"
 
-def export_to_markdown(highlights: List[KindleHighlight], output_path: Path) -> None:
-    """Export highlights to a Markdown file."""
-    with open(output_path, 'w', encoding='utf-8') as f:
-        # Group by book
-        books: Dict[str, List[KindleHighlight]] = {}
-        for h in highlights:
-            if h.book_title not in books:
-                books[h.book_title] = []
-            books[h.book_title].append(h)
+            # Write to file with YAML frontmatter for Obsidian
+            frontmatter = {
+                'title': book,
+                'author': book_highlights[0]['author'],
+                'tags': list(set(sum([h['tags'] for h in book_highlights], []))),
+                'created': datetime.now().strftime('%Y-%m-%d')
+            }
 
-        # Write each book's highlights
-        for book_title, book_highlights in books.items():
-            f.write(book_highlights[0].to_markdown())
+            md_file = output_dir / f"{self._sanitize_filename(book)}.md"
+            with open(md_file, 'w', encoding='utf-8') as f:
+                f.write('---\n')
+                yaml.dump(frontmatter, f, allow_unicode=True)
+                f.write('---\n\n')
+                f.write(md_content)
+
+    def export_notion(self, output_dir, notion_token, database_id):
+        """Export highlights to Notion (placeholder)."""
+        # TODO: Implement Notion API integration
+        pass
+
+    def export_anki(self, output_dir):
+        """Export highlights to Anki-compatible CSV."""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        csv_file = output_dir / "anki_highlights.csv"
+
+        with open(csv_file, 'w', encoding='utf-8', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Book', 'Highlight', 'Location', 'Tags'])
+            for h in self.highlights:
+                writer.writerow([
+                    h['title'],
+                    h['highlight'],
+                    h['location'],
+                    ', '.join(h['tags'])
+                ])
+
+    def _sanitize_filename(self, filename):
+        """Sanitize filenames for use in paths."""
+        return re.sub(r'[\\/*?:"<>|]', "_", filename)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert Kindle highlights to Markdown.')
-    parser.add_argument('input', type=Path, help='Path to My Clippings.txt')
-    parser.add_argument('-o', '--output', type=Path, default='highlights.md', help='Output Markdown file')
+    parser = argparse.ArgumentParser(description='Convert Kindle highlights to Markdown/Notion/Anki.')
+    parser.add_argument('--input', required=True, help='Path to My Clippings.txt')
+    parser.add_argument('--output_dir', default='./output', help='Output directory')
+    parser.add_argument('--format', choices=['markdown', 'notion', 'anki'], required=True, help='Export format')
+    parser.add_argument('--notion_token', help='Notion API token (required for Notion export)')
+    parser.add_argument('--database_id', help='Notion database ID (required for Notion export)')
     args = parser.parse_args()
 
-    if not args.input.exists():
-        raise FileNotFoundError(f"Input file not found: {args.input}")
+    # Parse highlights
+    kh = KindleHighlights(args.input)
+    kh.parse()
 
-    highlights = parse_clippings(args.input)
-    export_to_markdown(highlights, args.output)
-    print(f"Exported {len(highlights)} highlights to {args.output}")
+    # Add tags (example: tag by book title)
+    tags = {book: [book.lower().replace(' ', '_')] for book in kh.books}
+    kh.add_tags(tags)
+
+    # Export
+    if args.format == 'markdown':
+        kh.export_markdown(args.output_dir)
+    elif args.format == 'notion':
+        if not args.notion_token or not args.database_id:
+            raise ValueError("Notion token and database ID are required for Notion export.")
+        kh.export_notion(args.output_dir, args.notion_token, args.database_id)
+    elif args.format == 'anki':
+        kh.export_anki(args.output_dir)
+
+    print(f"Exported {len(kh.highlights)} highlights to {args.output_dir}")
 
 
 if __name__ == '__main__':

@@ -1,46 +1,65 @@
-# Kindle Highlights to Markdown
+# Kindle Highlights to Markdown/Notion/Anki
 
-A CLI tool to parse Kindle highlights (`My Clippings.txt`) and export them to Markdown for Obsidian, Notion, or blogging.
+Convert your Kindle highlights (`My Clippings.txt`) into structured, searchable formats for Obsidian, Notion, and Anki.
 
 ## Features
-- Parse `My Clippings.txt` into structured data.
-- Export highlights to Markdown (one file per book).
-- Filter by book, date, or highlight type.
-- Deduplicate identical highlights.
-- Zero dependencies (single-file executable).
+- **Markdown Export**: Obsidian-compatible `.md` files with YAML frontmatter.
+- **Anki Export**: CSV import format for spaced repetition.
+- **Tagging**: Auto-tag highlights by book title.
+- **Flexible Parsing**: Handles highlights, notes, and bookmarks.
 
 ## Installation
 ```bash
-pip install kindle-highlights-to-markdown
+pip install pyyaml
 ```
 
 ## Usage
 ```bash
-kindle-highlights --input "My Clippings.txt" --output "~/notes/kindle/"
+python3 kindle_highlights.py --input "My Clippings.txt" --output_dir ./output --format markdown
 ```
+
+### Options
+| Argument       | Description                                      |
+|----------------|--------------------------------------------------|
+| `--input`      | Path to `My Clippings.txt` (required)            |
+| `--output_dir` | Output directory (default: `./output`)           |
+| `--format`     | Export format: `markdown`, `anki`, or `notion`   |
+| `--notion_token`| Notion API token (required for Notion export)    |
+| `--database_id` | Notion database ID (required for Notion export)  |
 
 ## Example Output
+### Markdown
 ```markdown
-# The Pragmatic Programmer
-**Author**: Andrew Hunt, David Thomas
-**Date**: 2026-05-15
+---
+title: The Lean Startup
+author: Eric Ries
+tags: [the_lean_startup]
+---
 
-## Highlights
-- > The cat ate my source code.
-  *Location: 1234 | Added: 2026-05-10*
+# The Lean Startup
 
-- > Programming is a craft.
-  *Location: 5678 | Added: 2026-05-12* | #philosophy*
+**Author:** Eric Ries
+
+## Location 123
+**Added on:** 2025-05-10 14:30:22
+
+The fundamental activity of a startup is to turn ideas into products...
 ```
 
-## Consolidation Notice
-This repository is the **canonical source** for `kindle-highlights-to-markdown`.
+### Anki CSV
+```csv
+Book,Highlight,Location,Tags
+The Lean Startup,"If you cannot fail, you cannot learn.",456,the_lean_startup
+```
 
-Due to autonomous development cycles, redundant repositories were created:
-- [kindle-highlights-to-markdown-1778816163](https://github.com/fairyfemirins/kindle-highlights-to-markdown-1778816163)
-- [kindle-highlights-to-markdown-femirins](https://github.com/fairyfemirins/kindle-highlights-to-markdown-femirins)
+## Technical Architecture
+- **Parser**: Regex-based extraction of title, author, metadata, and highlight.
+- **Tagger**: Auto-tags highlights by book title (customizable).
+- **Exporters**: Modular design for new formats (e.g., Logseq, Roam).
 
-**All future updates will be pushed here.** Redundant repositories are archived.
+## Limitations
+- Notion export requires manual API setup (placeholder in code).
+- Multi-language support depends on Kindle's clippings format.
 
 ## License
 MIT

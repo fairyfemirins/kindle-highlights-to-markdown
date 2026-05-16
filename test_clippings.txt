@@ -1,15 +1,15 @@
-The Pragmatic Programmer (Andrew Hunt; David Thomas)
-- Your Highlight on page 42 | Location 123-124 | Added on Friday, May 15, 2026 08:46:00 PM
+The Lean Startup: How Today's Entrepreneurs Use Continuous Innovation to Create Radically Successful Businesses (Eric Ries)
+- Your Highlight on Location 123-124 | Added on Saturday, May 10, 2025 2:30:22 PM
 
-This is a highlight from the book.
+The fundamental activity of a startup is to turn ideas into products, measure how customers respond, and then learn whether to pivot or persevere.
 ==========
-The Pragmatic Programmer (Andrew Hunt; David Thomas)
-- Your Note on page 42 | Location 124 | Added on Friday, May 15, 2026 08:47:00 PM
+The Lean Startup: How Today's Entrepreneurs Use Continuous Innovation to Create Radically Successful Businesses (Eric Ries)
+- Your Highlight on Location 456-457 | Added on Sunday, May 11, 2025 10:15:47 AM
 
-This is a note about the highlight.
+If you cannot fail, you cannot learn.
 ==========
-Atomic Habits (James Clear)
-- Your Highlight on page 100 | Location 456 | Added on Friday, May 15, 2026 08:48:00 PM
+Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones (James Clear)
+- Your Note on Location 789 | Added on Monday, May 12, 2025 3:45:10 PM
 
-This is another highlight.
+Habits are the compound interest of self-improvement.
 ==========
